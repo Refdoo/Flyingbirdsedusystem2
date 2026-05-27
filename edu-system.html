@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排课·考勤·财务·日历一体化系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "微软雅黑", sans-serif;
+        }
+        body {
+            background: #f5f7fa;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        .title {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+        /* 标签切换栏 */
+        .tab-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .tab-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #cbd5e0;
+        }
+        .tab-btn.active {
+            background: #4299e1;
+            color: #fff;
+        }
+        /* 年月筛选栏 */
+        .date-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .date-bar select, .date-bar button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+        .date-bar button {
+            background: #4299e1;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .form-box {
+            flex: 1;
+            min-width: 380px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #2d3748;
+            text-align: center;
+        }
+        .form-item {
+            margin-bottom: 18px;
+        }
+        .form-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+        .form-item input, .form-item select, .form-item textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .list-box {
+            flex: 2;
+            min-width: 500px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .list-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #2d3748;
+            text-align: center;
+        }
+        .table-header {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1.5fr 1.2fr 1fr;
+            padding: 12px;
+            background: #edf2f7;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .course-item {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1.5fr 1.2fr 1fr;
+            padding: 12px;
+            border-bottom: 1px solid #f7fafc;
+            align-items: center;
+        }
+        .detail-btn,.del-btn {
+            padding: 6px 10px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 2px;
+        }
+        .detail-btn{background: #38a169;}
+        .del-btn{background: #e53e3e;}
+        .empty-tip {text-align: center;color: #718096;padding: 30px;}
+        .course-tag {
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+        }
+        .tag-yu { background: #e53e3e; }
+        .tag-shu { background: #38a169; }
+        .tag-ying { background: #4299e1; }
+        .tag-wu { background: #9f7aea; }
+        .tag-hua { background: #ed8936; }
+        .tag-one { background: #f56565; }
+
+        /* 弹窗样式 */
+        .modal{
+            position: fixed;top:0;left:0;width:100%;height:100%;
+            background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;
+            z-index:999;
+        }
+        .modal-content{
+            background:white;width:90%;max-width:800px;max-height:80vh;
+            overflow-y:auto;padding:30px;border-radius:15px;position:relative;
+        }
+        .close-modal{
+            position:absolute;top:15px;right:20px;font-size:24px;color:#e53e3e;cursor:pointer;
+        }
+        .onekey-btn{
+            background:#48bb78;color:white;border:none;padding:10px 20px;border-radius:8px;
+            cursor:pointer;margin-bottom:20px;
+        }
+        .student-item{
+            display:flex;justify-content:space-between;align-items:center;
+            padding:10px;border-bottom:1px solid #eee;
+        }
+        .attend-btn{
+            padding:5px 10px;border:none;border-radius:5px;cursor:pointer;margin:0 5px;
+        }
+        .attend{background:#48bb78;color:white;}
+        .absent{background:#f56565;color:white;}
+        .fee-box{
+            background:#f7fafc;padding:10px;border-radius:8px;margin-top:5px;
+        }
+
+        /* 财务模块样式 */
+        .finance-box {
+            width: 100%;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .finance-card-wrap {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .finance-card {
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+        }
+        .card1 { background: #4299e1; }
+        .card2 { background: #38a169; }
+        .card3 { background: #9f7aea; }
+        .card4 { background: #ed8936; }
+        .card5 { background: #d69e2e; }
+        .card6 { background: #e53e3e; }
+        .card-title { font-size: 16px; margin-bottom: 8px; }
+        .card-num { font-size: 24px; font-weight: bold; }
+        .finance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .finance-table th, .finance-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .finance-table th {
+            background: #edf2f7;
+        }
+        .red-text { color: #e53e3e; font-weight: bold; }
+        .green-text { color: #38a169; font-weight: bold; }
+        .range-title {
+            text-align: center;
+            color: #2d3748;
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        /* ==================== 新增：日历视图样式 ==================== */
+        .calendar-box {
+            width: 100%;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .calendar-title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        .calendar-week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .week-day {
+            text-align: center;
+            padding: 10px;
+            background: #edf2f7;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .calendar-day {
+            min-height: 120px;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+        }
+        .day-num {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a5568;
+        }
+        .day-course {
+            font-size: 12px;
+            padding: 4px;
+            margin: 2px 0;
+            background: #ebf8ff;
+            border-radius: 3px;
+            border-left: 3px solid #4299e1;
+        }
+        .empty-day {
+            min-height: 120px;
+            border: 1px dashed #e2e8f0;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 class="title">📅 排课·考勤·财务·日历一体化系统</h1>
+    <p>Mac专属 | 批量排课 | 一键考勤 | 财务统计 | 日历视图</p>
+</div>
+
+<!-- 三大功能标签切换 -->
+<div class="tab-bar">
+    <button class="tab-btn active" id="tabCourse" onclick="switchTab('course')">排课&考勤管理</button>
+    <button class="tab-btn" id="tabFinance" onclick="switchTab('finance')">财务&区间统计</button>
+    <button class="tab-btn" id="tabCalendar" onclick="switchTab('calendar')">📆 日历视图</button>
+</div>
+
+<!-- 年月筛选栏 -->
+<div class="date-bar">
+    <div id="courseDateWrap">
+        <select id="yearSelect"></select>
+        <select id="monthSelect"></select>
+    </div>
+    <div id="financeDateWrap" style="display:none;">
+        <span>起始：</span>
+        <select id="startYear"></select>
+        <select id="startMonth"></select>
+        <span>~ 结束：</span>
+        <select id="endYear"></select>
+        <select id="endMonth"></select>
+    </div>
+    <button onclick="refreshAll()">刷新数据</button>
+</div>
+
+<!-- 排课考勤区域 -->
+<div class="main-container" id="courseMain">
+    <div class="form-box">
+        <h2 class="form-title">➕ 批量添加连续课程</h2>
+        <div class="form-item">
+            <label>🗓️ 开始日期（任意年月）</label>
+            <input type="date" id="startDate" required>
+        </div>
+        <div class="form-item">
+            <label>🗓️ 结束日期（任意年月）</label>
+            <input type="date" id="endDate" required>
+        </div>
+        <div class="form-item">
+            <label>上课时间段</label>
+            <input type="text" id="courseTime" placeholder="例如：08:00-10:00" required>
+        </div>
+        <div class="form-item">
+            <label>课程类型</label>
+            <select id="courseType" required>
+                <option value="语文">语文</option>
+                <option value="数学">数学</option>
+                <option value="英语">英语</option>
+                <option value="物理">物理</option>
+                <option value="化学">化学</option>
+                <option value="一对一">一对一</option>
+            </select>
+        </div>
+        <div class="form-item">
+            <label>授课教师</label>
+            <input type="text" id="teacherName" required>
+        </div>
+        <div class="form-item">
+            <label>💰 单节课教师课酬（元）</label>
+            <input type="number" id="teacherSalary" placeholder="填写单节课酬" min="0" value="0">
+        </div>
+        <div class="form-item">
+            <label>📝 课程学生（一行一个名字）</label>
+            <textarea id="studentList" rows="4" placeholder="一行一个学生姓名"></textarea>
+        </div>
+        <button class="add-btn" onclick="addCourse()">✅ 确认批量添加排课</button>
+    </div>
+
+    <div class="list-box">
+        <h2 class="list-title" id="currentMonthTitle">📋 当月排课一览表</h2>
+        <div class="table-header">
+            <span>日期</span>
+            <span>时间段</span>
+            <span>课程</span>
+            <span>教师</span>
+            <span>操作</span>
+        </div>
+        <div id="courseListContainer">
+            <p class="empty-tip">暂无当月排课数据</p>
+        </div>
+    </div>
+</div>
+
+<!-- 财务统计区域 -->
+<div class="finance-box" id="financeMain">
+    <h2 class="list-title">📊 财务区间数据汇总</h2>
+    <p class="range-title" id="rangeText">请选择年月区间并刷新数据</p>
+    <div class="finance-card-wrap">
+        <div class="finance-card card1">
+            <div class="card-title">学员总应收学费(元)</div>
+            <div class="card-num" id="totalAllFee">0.00</div>
+        </div>
+        <div class="finance-card card2">
+            <div class="card-title">学员总已消耗学费(元)</div>
+            <div class="card-num" id="totalUsedFee">0.00</div>
+        </div>
+        <div class="finance-card card3">
+            <div class="card-title">学员当前剩余学费(元)</div>
+            <div class="card-num" id="totalRemainFee">0.00</div>
+        </div>
+        <div class="finance-card card4">
+            <div class="card-title">教师累计课酬(元)</div>
+            <div class="card-num" id="totalTeacherSalary">0.00</div>
+        </div>
+        <div class="finance-card card5">
+            <div class="card-title">区间毛利润(元)</div>
+            <div class="card-num" id="totalProfit">0.00</div>
+        </div>
+        <div class="finance-card card6">
+            <div class="card-title">区间利润率</div>
+            <div class="card-num" id="profitRate">0.00%</div>
+        </div>
+    </div>
+    <h3 style="margin:20px 0 10px;">📃 区间财务明细报表</h3>
+    <table class="finance-table">
+        <thead>
+            <tr>
+                <th>上课日期</th>
+                <th>课程</th>
+                <th>授课教师</th>
+                <th>单节课酬(元)</th>
+                <th>学员扣费总额(元)</th>
+            </tr>
+        </thead>
+        <tbody id="financeTableBody">
+            <tr><td colspan="5">暂无财务明细数据</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ==================== 新增：日历视图区域 ==================== -->
+<div class="calendar-box" id="calendarMain">
+    <h2 class="calendar-title" id="calendarTitle">📆 2025年01月 课程日历</h2>
+    <div class="calendar-week">
+        <div class="week-day">周日</div>
+        <div class="week-day">周一</div>
+        <div class="week-day">周二</div>
+        <div class="week-day">周三</div>
+        <div class="week-day">周四</div>
+        <div class="week-day">周五</div>
+        <div class="week-day">周六</div>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
+<!-- 考勤弹窗 -->
+<div class="modal" id="detailModal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">✕</span>
+        <h2 style="text-align:center;margin-bottom:20px">课程详情·考勤·收费管理</h2>
+        <button class="onekey-btn" onclick="setAllAttend()">🔘 一键标记全部出勤</button>
+        <div id="detailContent"></div>
+    </div>
+</div>
+
+<script>
+    // 全局数据
+    let courseData = JSON.parse(localStorage.getItem('eduCourseSystem')) || [];
+    let currentCourseIndex = 0;
+    const MIN_YEAR = 2020;
+    const MAX_YEAR = 2035;
+
+    // 初始化年月选择器
+    function initYearSelect(selectId) {
+        const select = document.getElementById(selectId);
+        for(let i=MIN_YEAR; i<=MAX_YEAR; i++) select.innerHTML += `<option value="${i}">${i}年</option>`;
+        select.value = new Date().getFullYear();
+    }
+    function initMonthSelect(selectId) {
+        const select = document.getElementById(selectId);
+        for(let i=1; i<=12; i++) select.innerHTML += `<option value="${i}">${i}月</option>`;
+        select.value = new Date().getMonth()+1;
+    }
+
+    window.onload = function() {
+        initYearSelect('yearSelect'); initMonthSelect('monthSelect');
+        initYearSelect('startYear'); initMonthSelect('startMonth');
+        initYearSelect('endYear'); initMonthSelect('endMonth');
+        
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
+        document.getElementById('endDate').value = today;
+        refreshAll();
+    }
+
+    // 切换三大标签
+    function switchTab(type) {
+        const btn = {
+            course: document.getElementById('tabCourse'),
+            finance: document.getElementById('tabFinance'),
+            calendar: document.getElementById('tabCalendar')
+        };
+        const main = {
+            course: document.getElementById('courseMain'),
+            finance: document.getElementById('financeMain'),
+            calendar: document.getElementById('calendarMain')
+        };
+        const dateWrap = {
+            course: document.getElementById('courseDateWrap'),
+            finance: document.getElementById('financeDateWrap')
+        };
+
+        // 重置所有
+        Object.values(btn).forEach(item => item.classList.remove('active'));
+        Object.values(main).forEach(item => item.style.display = 'none');
+        dateWrap.course.style.display = 'none';
+        dateWrap.finance.style.display = 'none';
+
+        // 激活当前
+        btn[type].classList.add('active');
+        main[type].style.display = type === 'course' ? 'flex' : 'block';
+        if(type === 'course') dateWrap.course.style.display = 'inline';
+        if(type === 'finance') dateWrap.finance.style.display = 'flex';
+        if(type === 'calendar') dateWrap.course.style.display = 'inline';
+        
+        refreshAll();
+    }
+
+    // 刷新所有数据
+    function refreshAll() {
+        renderCourseList();
+        calcFinanceData();
+        renderCalendar();
+    }
+
+    // 批量添加课程
+    function addCourse() {
+        const start = new Date(document.getElementById('startDate').value);
+        const end = new Date(document.getElementById('endDate').value);
+        const time = document.getElementById('courseTime').value;
+        const type = document.getElementById('courseType').value;
+        const teacher = document.getElementById('teacherName').value;
+        const teacherPerSalary = Number(document.getElementById('teacherSalary').value) || 0;
+        const studentText = document.getElementById('studentList').value;
+
+        if(start > end) return alert('开始日期不能晚于结束日期！');
+        if(!time || !teacher) return alert('请填写核心排课信息！');
+
+        let students = [];
+        if(studentText.trim()){
+            let names = studentText.split('\n').filter(item=>item.trim());
+            students = names.map(name=>({
+                name:name.trim(), attendance:'未登记',
+                totalFee:0, perFee:0, balance:0
+            }))
+        }
+
+        for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+            const date = d.toISOString().split('T')[0];
+            courseData.push({ date, time, type, teacher, teacherPerSalary, students });
+        }
+
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        document.getElementById('courseTime').value = '';
+        document.getElementById('teacherName').value = '';
+        document.getElementById('teacherSalary').value = '0';
+        document.getElementById('studentList').value = '';
+
+        alert('✅ 批量排课添加成功！');
+        refreshAll();
+    }
+
+    // 渲染排课列表
+    function renderCourseList() {
+        const year = document.getElementById('yearSelect').value;
+        const month = document.getElementById('monthSelect').value.padStart(2, '0');
+        const container = document.getElementById('courseListContainer');
+        document.getElementById('currentMonthTitle').innerText = `📋 ${year}年${month}月 排课一览表`;
+        
+        const currentMonthCourses = courseData.filter(item => item.date.startsWith(`${year}-${month}`));
+        container.innerHTML = currentMonthCourses.length === 0 ? '<p class="empty-tip">暂无当月排课数据</p>' : '';
+
+        currentMonthCourses.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'course-item';
+            let tagClass = item.type === '一对一' ? 'tag-one' : `tag-${item.type.substring(0,1)}`;
+
+            div.innerHTML = `
+                <span>${item.date.split('-')[2]}日</span>
+                <span>${item.time}</span>
+                <span><div class="course-tag ${tagClass}">${item.type}</div></span>
+                <span>${item.teacher}</span>
+                <div>
+                    <button class="detail-btn" onclick="openDetail(${index})">查看详情</button>
+                    <button class="del-btn" onclick="deleteCourse(${index})">删除</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // 打开详情弹窗
+    function openDetail(index){
+        currentCourseIndex = index;
+        const course = courseData[index];
+        const content = document.getElementById('detailContent');
+        document.getElementById('detailModal').style.display='flex';
+
+        let html = course.students.length === 0 ? '<p>暂无学生名单</p>' : '';
+        course.students.forEach((stu,i)=>{
+            html+=`
+            <div class="student-item">
+                <div>
+                    <b>${stu.name}</b> | 考勤：<span style="color:${stu.attendance=='出勤'?'green':stu.attendance=='缺勤'?'red':'gray'}">${stu.attendance}</span>
+                </div>
+                <div>
+                    <button class="attend-btn attend" onclick="setAttend(${i},'出勤')">出勤</button>
+                    <button class="attend-btn absent" onclick="setAttend(${i},'缺勤')">缺勤</button>
+                </div>
+            </div>
+            <div class="fee-box">
+                总课时费：<input type="number" placeholder="总费用" value="${stu.totalFee}" oninput="setTotalFee(${i},this.value)">
+                单节课扣费：<input type="number" placeholder="单节费用" value="${stu.perFee}" oninput="setPerFee(${i},this.value)">
+               剩余余额：<b style="color:red">${stu.balance}</b> 元
+                <button onclick="deductFee(${i})" style="background:#f56565;color:white;border:none;padding:5px;border-radius:5px;margin-left:10px">扣本节课费用</button>
+            </div><hr>
+            `;
+        })
+        content.innerHTML = html;
+    }
+
+    function closeModal(){ document.getElementById('detailModal').style.display='none'; }
+    function setAllAttend(){
+        courseData[currentCourseIndex].students.forEach(stu => stu.attendance = '出勤');
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        openDetail(currentCourseIndex);
+        alert('✅ 已一键标记所有学生出勤！');
+    }
+    function setAttend(studentIndex,status){
+        courseData[currentCourseIndex].students[studentIndex].attendance = status;
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        openDetail(currentCourseIndex);
+    }
+    function setTotalFee(studentIndex,value){
+        courseData[currentCourseIndex].students[studentIndex].totalFee = Number(value)||0;
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        calcFinanceData();
+    }
+    function setPerFee(studentIndex,value){
+        courseData[currentCourseIndex].students[studentIndex].perFee = Number(value)||0;
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        calcFinanceData();
+    }
+    function deductFee(studentIndex){
+        const stu = courseData[currentCourseIndex].students[studentIndex];
+        if(stu.perFee<=0) return alert('请先设置单节课扣费金额！');
+        stu.balance = (stu.totalFee - stu.perFee).toFixed(2);
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        openDetail(currentCourseIndex);
+        calcFinanceData();
+        alert(`✅ 扣费成功！剩余余额：${stu.balance}元`);
+    }
+    function deleteCourse(index) {
+        if(!confirm('⚠️ 确定删除该课程所有数据吗？')) return;
+        courseData.splice(index, 1);
+        localStorage.setItem('eduCourseSystem', JSON.stringify(courseData));
+        refreshAll();
+    }
+
+    // 财务区间统计
+    function calcFinanceData() {
+        const sY = Number(document.getElementById('startYear').value);
+        const sM = Number(document.getElementById('startMonth').value);
+        const eY = Number(document.getElementById('endYear').value);
+        const eM = Number(document.getElementById('endMonth').value);
+
+        document.getElementById('rangeText').innerText = `统计区间：${sY}年${sM}月 ~ ${eY}年${eM}月`;
+        const targetCourses = courseData.filter(item => {
+            const y = Number(item.date.split('-')[0]);
+            const m = Number(item.date.split('-')[1]);
+            return new Date(y,m-1) >= new Date(sY,sM-1) && new Date(y,m-1) <= new Date(eY,eM-1);
+        });
+
+        let totalAllFee=0,totalUsedFee=0,totalRemainFee=0,totalTeacherSalary=0;
+        targetCourses.forEach(course=>{
+            totalTeacherSalary += Number(course.teacherPerSalary)||0;
+            course.students.forEach(stu=>{
+                totalAllFee += Number(stu.totalFee)||0;
+                totalUsedFee += (Number(stu.totalFee)-Number(stu.balance))||0;
+                totalRemainFee += Number(stu.balance)||0;
+            });
+        });
+
+        let profit = totalUsedFee - totalTeacherSalary;
+        let profitRate = totalUsedFee>0 ? (profit/totalUsedFee*100).toFixed(2)+'%' : '暂无营收';
+
+        document.getElementById('totalAllFee').innerText = totalAllFee.toFixed(2);
+        document.getElementById('totalUsedFee').innerText = totalUsedFee.toFixed(2);
+        document.getElementById('totalRemainFee').innerText = totalRemainFee.toFixed(2);
+        document.getElementById('totalTeacherSalary').innerText = totalTeacherSalary.toFixed(2);
+        const profitDom = document.getElementById('totalProfit');
+        profitDom.innerText = profit.toFixed(2);
+        profitDom.className = 'card-num '+(profit<0?'red-text':'green-text');
+        document.getElementById('profitRate').innerText = profitRate;
+
+        const tableBody = document.getElementById('financeTableBody');
+        tableBody.innerHTML = targetCourses.length===0 ? '<tr><td colspan="5">暂无财务明细数据</td></tr>' : '';
+        targetCourses.forEach(course=>{
+            let stuUsed = course.students.reduce((sum,s)=>sum+(Number(s.totalFee)-Number(s.balance)),0).toFixed(2);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${course.date}</td><td>${course.type}</td><td>${course.teacher}</td><td>${course.teacherPerSalary.toFixed(2)}</td><td>${stuUsed}</td>`;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // ==================== 核心：渲染日历视图 ====================
+    function renderCalendar() {
+        const year = Number(document.getElementById('yearSelect').value);
+        const month = Number(document.getElementById('monthSelect').value) - 1;
+        const calendarGrid = document.getElementById('calendarGrid');
+        document.getElementById('calendarTitle').innerText = `📆 ${year}年${month+1}月 课程日历`;
+        calendarGrid.innerHTML = '';
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month+1, 0).getDate();
+        const currentMonthCourses = courseData.filter(item => item.date.startsWith(`${year}-${(month+1).toString().padStart(2,'0')}`));
+
+        // 填充前置空白
+        for(let i=0; i<firstDay; i++){
+            const empty = document.createElement('div');
+            empty.className = 'empty-day';
+            calendarGrid.appendChild(empty);
+        }
+
+        // 生成日期格子
+        for(let day=1; day<=daysInMonth; day++){
+            const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+            const dayCourses = currentMonthCourses.filter(item => item.date === dateStr);
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            dayDiv.innerHTML = `<div class="day-num">${day}日</div>`;
+
+            // 填充当天课程
+            dayCourses.forEach(course => {
+                const courseDiv = document.createElement('div');
+                courseDiv.className = 'day-course';
+                courseDiv.innerText = `${course.time} | ${course.type} | ${course.teacher}`;
+                dayDiv.appendChild(courseDiv);
+            });
+
+            calendarGrid.appendChild(dayDiv);
+        }
+    }
+</script>
+</body>
+</html>
